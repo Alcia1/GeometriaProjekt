@@ -2,17 +2,20 @@ from collections import namedtuple
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg, NavigationToolbar2Tk
 import matplotlib.pyplot as plt
 import math
-#zdefiniowanie punktu
+import tkinter as tk
+
+# zdefiniowanie punktu
 Point = namedtuple('Point', ['x', 'y'])
+
 # funkcja określająca orientację trzech punktów 
 def orientation(p, q, r):
     temp = (q.y - p.y) * (r.x - q.x) - (q.x - p.x) * (r.y - q.y)
     if temp == 0:
         return 0  # 0 gdy punkty są współliniowe
-    elif temp>0:
-        return 1 # 1 gdy jest skręt w prawo
-    else: 
-        return 2 # 2 gdy jest skręt w lewo
+    elif temp > 0:
+        return 1  # 1 gdy jest skręt w prawo
+    else:
+        return 2  # 2 gdy jest skręt w lewo
 
 # funkcja obliczająca kwadrat odległości między dwoma punktami
 def distance_sq(p1, p2):
@@ -28,15 +31,15 @@ def convex_hull(points):
         math.atan2(p.y - start.y, p.x - start.x),
         distance_sq(start, p)
     ))
-    # budowanie otoczki - korystanie z funkcji sprawdzjącej skręt - jeżeli skręca w lewo jest dodawany do otoczki. 
+    # budowanie otoczki - korzystanie z funkcji sprawdzającej skręt
     hull = []
     for p in sorted_points:
         while len(hull) >= 2 and orientation(hull[-2], hull[-1], p) != 2:
             hull.pop()
         hull.append(p)
-
     return hull
-# funkcja okreslająca kształt otoczki
+
+# funkcja określająca kształt otoczki
 def otoczka_typ(hull):
     l = len(set(hull))
     if l == 1:
@@ -49,10 +52,14 @@ def otoczka_typ(hull):
         return "czworokąt"
     else:
         return "wielokąt"
-    # funkcja rysująca otoczkę wypułką
+
+# funkcja rysująca otoczkę wypukłą
 def draw(points, hull, canvas_frame):
+    # Usuń stare
     for widget in canvas_frame.winfo_children():
         widget.destroy()
+
+    plt.close('all')  # zamknij stare figury
 
     fig, ax = plt.subplots(figsize=(6, 4), dpi=100)
 
@@ -70,28 +77,28 @@ def draw(points, hull, canvas_frame):
     ax.grid(True)
     ax.set_title("Otoczka wypukła")
     ax.legend(loc='upper center', bbox_to_anchor=(0.5, -0.2), ncol=2)
-
     fig.subplots_adjust(bottom=0.3)
 
     canvas = FigureCanvasTkAgg(fig, master=canvas_frame)
-    canvas.draw()
-    canvas.get_tk_widget().pack()
-
     toolbar = NavigationToolbar2Tk(canvas, canvas_frame)
     toolbar.update()
-    toolbar.pack()
-    # główna funkcja wywołująca pozostałe funkcję
+    toolbar.pack(side=tk.TOP, fill=tk.X)
+
+    canvas.draw()
+    canvas.get_tk_widget().pack(side=tk.TOP, fill=tk.BOTH, expand=True)
+
+# główna funkcja wywołująca pozostałe funkcje
 def main(points, canvas_frame):
     hull = convex_hull(points)
     draw(points, hull, canvas_frame)
     typ = otoczka_typ(hull)
-    poj=next(iter(set(hull)))
+    poj = next(iter(set(hull)))
     result = f"\nOtoczka wypukła to: {typ} "
-    if(typ=='punkt'):
-        result+= "Wierzchołek otoczki wypukłej: "
-        result+=f"({poj.x}, {poj.y})"
+    if typ == 'punkt':
+        result += "Wierzchołek otoczki wypukłej: "
+        result += f"({poj.x}, {poj.y})"
     else:
-        result+="Wierzchołki otoczki wypukłej: "
+        result += "Wierzchołki otoczki wypukłej: "
         for p in hull:
-            result+=f"({p.x}, {p.y}) "
+            result += f"({p.x}, {p.y}) "
     return result
